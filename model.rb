@@ -1,106 +1,78 @@
-# Base class for all models
-class BaseModel
-  attr_accessor :id, :created_at, :updated_at
+# This file is auto-generated from the current state of the database. Instead
+# of editing this file, please use the migrations feature of Active Record to
+# incrementally modify your database, and then regenerate this schema definition.
+#
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
+#
+# It's strongly recommended that you check this file into your version control system.
 
-  def initialize(id, created_at, updated_at)
-    @id = id
-    @created_at = created_at
-    @updated_at = updated_at
+ActiveRecord::Schema[7.2].define(version: 2025_04_01_000000) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "pgcrypto"
+  enable_extension "plpgsql"
+
+  create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "first_name", null: false
+    t.string "last_name", null: false
+    t.string "email", null: false
+    t.string "phone"
+    t.string "address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
   end
-end
 
-# User model
-class User < BaseModel
-  attr_accessor :firstname, :lastname, :email, :phone, :address
-
-  def initialize(id, firstname, lastname, email, phone, address, created_at, updated_at)
-    super(id, created_at, updated_at)
-    @firstname = firstname
-    @lastname = lastname
-    @email = email
-    @phone = phone
-    @address = address
+  create_table "patients", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.date "dob", null: false
+    t.string "gender", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
-end
 
-# Patient model
-class Patient < BaseModel
-  attr_accessor :name, :dob, :gender, :allergies, :conditions
-
-  def initialize(id, name, dob, gender, allergies, conditions, created_at, updated_at)
-    super(id, created_at, updated_at)
-    @name = name
-    @dob = dob
-    @gender = gender
-    @allergies = allergies
-    @conditions = conditions
+  create_table "allergies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "substance", null: false
+    t.string "reaction"
+    t.string "severity"
+    t.uuid "patient_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["patient_id"], name: "index_allergies_on_patient_id"
   end
-end
 
-# Allergy model
-class Allergy < BaseModel
-  attr_accessor :substance, :reaction, :severity, :patient
-
-  def initialize(id, substance, reaction, severity, patient, created_at, updated_at)
-    super(id, created_at, updated_at)
-    @substance = substance
-    @reaction = reaction
-    @severity = severity
-    @patient = patient
+  create_table "conditions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "severity"
+    t.string "treatment"
+    t.uuid "patient_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["patient_id"], name: "index_conditions_on_patient_id"
   end
-end
 
-# Condition model
-class Condition < BaseModel
-  attr_accessor :name, :severity, :treatment, :patient
-
-  def initialize(id, name, severity, treatment, patient, created_at, updated_at)
-    super(id, created_at, updated_at)
-    @name = name
-    @severity = severity
-    @treatment = treatment
-    @patient = patient
+  create_table "appointments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "patient_id", null: false
+    t.string "doctor", null: false
+    t.datetime "date", null: false
+    t.string "status", default: "scheduled", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["patient_id"], name: "index_appointments_on_patient_id"
   end
-end
 
-# Appointment model
-class Appointment < BaseModel
-  attr_accessor :patient, :doctor, :date, :status
-
-  def initialize(id, patient, doctor, date, status, created_at, updated_at)
-    super(id, created_at, updated_at)
-    @patient = patient
-    @doctor = doctor
-    @date = date
-    @status = status
+  create_table "providers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "services", array: true, default: []
+    t.string "address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
+
+  add_foreign_key "allergies", "patients", on_delete: :cascade
+  add_foreign_key "conditions", "patients", on_delete: :cascade
+  add_foreign_key "appointments", "patients", on_delete: :cascade
 end
-
-# Provider model
-class Provider < BaseModel
-  attr_accessor :name, :services, :address
-
-  def initialize(id, name, services, address, created_at, updated_at)
-    super(id, created_at, updated_at)
-    @name = name
-    @services = services
-    @address = address
-  end
-end
-
-# Example linking
-patient = Patient.new("1", "John Doe", "1990-01-01", "Male", [], [], "2024-08-01T10:30:00Z", "2024-08-01T11:00:00Z")
-allergy = Allergy.new("2", "Penicillin", "Rash", "Mild", patient, "2024-08-01T10:30:00Z", "2024-08-01T11:00:00Z")
-condition = Condition.new("3", "Diabetes", "High", "Insulin therapy", patient, "2024-08-01T10:30:00Z", "2024-08-01T11:00:00Z")
-appointment = Appointment.new("4", patient, "Dr. Smith", "2024-08-15T10:30:00Z", "Booked", "2024-08-01T10:30:00Z", "2024-08-01T11:00:00Z")
-provider = Provider.new("5", "Downtown Clinic", ["General Medicine", "Pediatrics"], "123 Main Street", "2024-08-01T10:30:00Z", "2024-08-01T11:00:00Z")
-
-# Linking data
-patient.allergies << allergy
-patient.conditions << condition
-
-# Output example
-puts "Patient: #{patient.name}, Allergies: #{patient.allergies.map(&:substance).join(', ')}"
-puts "Condition: #{condition.name}, Severity: #{condition.severity}"
-puts "Appointment with #{appointment.doctor} on #{appointment.date}"
-puts "Provider: #{provider.name}, Services: #{provider.services.join(', ')}"
